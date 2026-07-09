@@ -30,6 +30,37 @@ Bu servis, sistemin **bayi master data** kaynağıdır (single source of truth).
 
 ---
 
+## Gün 2 Durumu
+
+- `GET /stores` — in-memory bayi listesi (15 İstanbul bayisi)
+- `GET /stores/{id}` — tek bayi detayı
+- `StoreResponse` record, `StoreType` enum, in-memory repository
+- Postman collection: `postman/store-service.postman_collection.json`
+
+### Endpointler
+
+```http
+GET http://localhost:8081/stores
+GET http://localhost:8081/stores/1
+```
+
+Örnek response:
+
+```json
+{
+  "id": 1,
+  "name": "Turkcell Kadikoy TIM",
+  "address": "Sogutlucesme Cd. No: 42, Kadikoy",
+  "city": "Istanbul",
+  "district": "Kadikoy",
+  "latitude": 40.9901,
+  "longitude": 29.0253,
+  "type": "TIM"
+}
+```
+
+---
+
 ## Çalıştırma
 
 ```bash
@@ -58,8 +89,8 @@ Beklenen cevap:
 
 ---
 
-## Sonraki Adımlar (Gün 2+)
+## Sonraki Adımlar (Gün 3+)
 
-- `GET /stores` — in-memory bayi listesi
 - Oracle + STORE tablosu (Gün 3–4)
 - `GET /stores?ids=1,5,9` — toplu sorgu (diğer servisler için)
+- `GET /stores?city=Istanbul&district=Kadikoy` — bölgesel filtreleme
