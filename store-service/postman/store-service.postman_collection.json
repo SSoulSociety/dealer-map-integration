@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "store-service",
+    "description": "store-service endpoints aligned with docs/api-contract.md",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["actuator", "health"]
+        }
+      }
+    },
+    {
+      "name": "Get All Stores",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stores",
+          "host": ["{{baseUrl}}"],
+          "path": ["stores"]
+        }
+      }
+    },
+    {
+      "name": "Get Store By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stores/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["stores", "1"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 Store",
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"id\": 1,\n  \"name\": \"Turkcell Kadikoy TIM\",\n  \"address\": \"Sogutlucesme Cd. No: 42, Kadikoy\",\n  \"city\": \"Istanbul\",\n  \"district\": \"Kadikoy\",\n  \"latitude\": 40.9901,\n  \"longitude\": 29.0253,\n  \"type\": \"TIM\",\n  \"phone\": \"+90 216 555 0101\",\n  \"workingHours\": \"09:00 - 21:00\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Get Store By Id - Not Found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stores/999",
+          "host": ["{{baseUrl}}"],
+          "path": ["stores", "999"]
+        }
+      },
+      "response": [
+        {
+          "name": "404 ApiError",
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"status\": 404,\n  \"message\": \"Store not found: id=999\",\n  \"timestamp\": \"2026-07-10T08:00:00Z\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    }
+  ]
+}
