@@ -12,15 +12,15 @@
 
 ```txt
 dealer-map-integration
-├── docker-compose.yml   (Oracle Free — Gün 3)
+├── docker-compose.yml   (Oracle Free)
 ├── stock-service        (port 8080 — Pasaj / Backend A)
 ├── store-service        (port 8081 — Bayi master data / Backend B)
-├── capability-service   (Hafta 2 — Backend B)
+├── capability-service   (port 8082 — İşlem yetkinliği / Backend B)
 ├── frontend
 └── docs
 ```
 
-## Local Oracle (Day 3)
+## Local Oracle
 
 ```bash
 docker compose up -d oracle
@@ -28,5 +28,18 @@ docker compose up -d oracle
 
 - Port: `1521` / Service: `FREEPDB1`
 - App user: `store_app` / `StoreApp123`
-- `STORE` DDL: `store-service/sql/01_create_store_table.sql`
+- SQL: `store-service/sql/`
 - API contract: [`docs/api-contract.md`](docs/api-contract.md)
+
+## Backend B (store + capability)
+
+```bash
+# Terminal 1
+cd store-service && mvnw.cmd spring-boot:run
+
+# Terminal 2 (store-service ayaktayken)
+cd capability-service && mvnw.cmd spring-boot:run
+```
+
+- Store Swagger: http://localhost:8081/swagger-ui.html
+- Capability Swagger: http://localhost:8082/swagger-ui.html
