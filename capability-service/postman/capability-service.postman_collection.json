@@ -1,0 +1,67 @@
+{
+  "info": {
+    "name": "capability-service",
+    "description": "capability-service endpoints — API contract 3.6 / 3.7 + Day 7 filters",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/actuator/health"
+      }
+    },
+    {
+      "name": "Get Capability Types",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/capabilities/types"
+      }
+    },
+    {
+      "name": "Stores by Capability (geo)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/capabilities/DEVICE_REPAIR/stores?lat=41.02&lng=29.01&radius=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["capabilities", "DEVICE_REPAIR", "stores"],
+          "query": [
+            { "key": "lat", "value": "41.02" },
+            { "key": "lng", "value": "29.01" },
+            { "key": "radius", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stores by Capability (weekend + ACTIVE)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/capabilities/NEW_LINE/stores?lat=41.02&lng=29.01&radius=15&workingHours=weekend&status=ACTIVE",
+          "host": ["{{baseUrl}}"],
+          "path": ["capabilities", "NEW_LINE", "stores"],
+          "query": [
+            { "key": "lat", "value": "41.02" },
+            { "key": "lng", "value": "29.01" },
+            { "key": "radius", "value": "15" },
+            { "key": "workingHours", "value": "weekend" },
+            { "key": "status", "value": "ACTIVE" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Invalid Capability Type - 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/capabilities/UNKNOWN_TYPE/stores?lat=41.02&lng=29.01&radius=10"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8082" }
+  ]
+}
