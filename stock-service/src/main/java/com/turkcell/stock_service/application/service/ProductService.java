@@ -4,14 +4,16 @@ import com.turkcell.stock_service.application.dto.ProductResponse;
 import com.turkcell.stock_service.application.dto.StockResponse;
 import com.turkcell.stock_service.domain.exception.ProductNotFoundException;
 import com.turkcell.stock_service.domain.model.StockLevel;
+import com.turkcell.stock_service.domain.service.DistanceCalculator;
+import com.turkcell.stock_service.infrastructure.client.StoreClient;
+import com.turkcell.stock_service.infrastructure.client.dto.StoreClientResponse;
 import com.turkcell.stock_service.infrastructure.persistence.ProductEntity;
 import com.turkcell.stock_service.infrastructure.persistence.ProductRepository;
 import com.turkcell.stock_service.infrastructure.persistence.StockRepository;
-import com.turkcell.stock_service.domain.service.DistanceCalculator;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class ProductService {
@@ -19,18 +21,18 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
     private final DistanceCalculator distanceCalculator;
-
+    private final StoreClient storeClient;
 
     public ProductService(
             ProductRepository productRepository,
             StockRepository stockRepository,
-            DistanceCalculator distanceCalculator
-
+            DistanceCalculator distanceCalculator,
+            StoreClient storeClient
     ) {
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
         this.distanceCalculator = distanceCalculator;
-
+        this.storeClient = storeClient;
     }
 
     public List<ProductResponse> getAllProducts() {
@@ -52,8 +54,7 @@ public class ProductService {
             double lat,
             double lng,
             double radius
-    )
-    {
+    ) {
         if (!productRepository.existsById(productId)) {
             throw new ProductNotFoundException(productId);
         }
@@ -61,18 +62,25 @@ public class ProductService {
         return stockRepository.findByProductId(productId)
                 .stream()
                 .map(stock -> {
-                    double[] coordinates = getStoreCoordinates(stock.getStoreId());
+                    StoreClientResponse store =
+                            storeClient.getStoreById(stock.getStoreId());
 
                     double distance = distanceCalculator.calculate(
                             lat,
                             lng,
-                            coordinates[0],
-                            coordinates[1]
+                            store.latitude(),
+                            store.longitude()
                     );
 
                     return new StockResponse(
-                            stock.getProductId(),
-                            stock.getStoreId(),
+                            store.id(),
+                            store.name(),
+                            store.address(),
+                            store.city(),
+                            store.district(),
+                            store.latitude(),
+                            store.longitude(),
+                            store.type(),
                             StockLevel.fromQuantity(stock.getQuantity()),
                             distance
                     );
@@ -89,14 +97,5 @@ public class ProductService {
                 product.getSku(),
                 product.getCategory()
         );
-    }
-
-    private double[] getStoreCoordinates(Long storeId) {
-        return switch (storeId.intValue()) {
-            case 1 -> new double[]{40.9901, 29.0253};
-            case 2 -> new double[]{41.0428, 29.0075};
-            case 3 -> new double[]{41.0602, 28.9877};
-            default -> new double[]{0.0, 0.0};
-        };
     }
 }
