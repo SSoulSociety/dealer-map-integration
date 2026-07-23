@@ -106,7 +106,7 @@ class GatewayRoutingTest {
 
         assertThat(routes).isNotNull();
         var writeRoute = routes.stream()
-                .filter(route -> route.getId().equals("stock-service-write"))
+                .filter(route -> "stock-service-write".equals(route.getId()))
                 .findFirst()
                 .orElseThrow();
 
