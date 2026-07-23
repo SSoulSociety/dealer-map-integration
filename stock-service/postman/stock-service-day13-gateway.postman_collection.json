@@ -1,0 +1,309 @@
+{
+  "info": {
+    "_postman_id": "460c7e93-4b0e-48ce-8892-cc3115804e35",
+    "name": "Stock Service - Day 13 API Gateway",
+    "description": "Stateful Day 13 verification through API Gateway. Runs health, routing, correlation ID, stock update, cache invalidation, and seed restore checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gatewayBaseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "storeId",
+      "value": "1"
+    },
+    {
+      "key": "lat",
+      "value": "40.9901"
+    },
+    {
+      "key": "lng",
+      "value": "29.0253"
+    },
+    {
+      "key": "radius",
+      "value": "10"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Gateway Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/actuator/health",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Gateway is healthy', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('UP');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Product Catalog Through Gateway",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Correlation-Id",
+            "value": "day13-products"
+          }
+        ],
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/api/pasaj/products",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pasaj",
+            "products"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Gateway routes the product catalog', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.be.an('array');",
+              "});",
+              "pm.test('Correlation ID is propagated', function () {",
+              "  pm.expect(pm.response.headers.get('X-Correlation-Id')).to.eql('day13-products');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Nearby Stock Through Gateway",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/api/pasaj/products/{{productId}}/stores?lat={{lat}}&lng={{lng}}&radius={{radius}}",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pasaj",
+            "products",
+            "{{productId}}",
+            "stores"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "{{lat}}"
+            },
+            {
+              "key": "lng",
+              "value": "{{lng}}"
+            },
+            {
+              "key": "radius",
+              "value": "{{radius}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Gateway preserves geo parameters and response contract', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.be.an('array');",
+              "  for (let index = 0; index < body.length; index += 1) {",
+              "    pm.expect(body[index]).to.have.property('stockLevel');",
+              "    pm.expect(body[index]).not.to.have.property('quantity');",
+              "    if (index > 0) {",
+              "      pm.expect(body[index].distance).to.be.at.least(body[index - 1].distance);",
+              "    }",
+              "  }",
+              "});",
+              "pm.test('Gateway creates a correlation ID', function () {",
+              "  pm.expect(pm.response.headers.get('X-Correlation-Id')).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Update Stock Through Gateway - 204",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 4\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/api/pasaj/products/{{productId}}/stores/{{storeId}}/stock",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pasaj",
+            "products",
+            "{{productId}}",
+            "stores",
+            "{{storeId}}",
+            "stock"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Stock update passes through the rate-limited write route', function () {",
+              "  pm.response.to.have.status(204);",
+              "  pm.expect(pm.response.text()).to.eql('');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Verify Cache Invalidation Through Gateway",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/api/pasaj/products/{{productId}}/stores?lat={{lat}}&lng={{lng}}&radius={{radius}}",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pasaj",
+            "products",
+            "{{productId}}",
+            "stores"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "{{lat}}"
+            },
+            {
+              "key": "lng",
+              "value": "{{lng}}"
+            },
+            {
+              "key": "radius",
+              "value": "{{radius}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Updated stock is visible instead of a stale cache result', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const store = pm.response.json().find(item => item.id === Number(pm.variables.get('storeId')));",
+              "  pm.expect(store, 'updated store must be inside the test radius').to.exist;",
+              "  pm.expect(store.stockLevel).to.eql('LOW');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Restore Seed Quantity",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gatewayBaseUrl}}/api/pasaj/products/{{productId}}/stores/{{storeId}}/stock",
+          "host": [
+            "{{gatewayBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pasaj",
+            "products",
+            "{{productId}}",
+            "stores",
+            "{{storeId}}",
+            "stock"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Seed quantity is restored', function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

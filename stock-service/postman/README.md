@@ -1,6 +1,6 @@
 # Stock Service Postman Dokümantasyonu
 
-Bu klasör Stock Service'in güncel API contract'ını ve Day 1-12 boyunca
+Bu klasör Stock Service'in güncel API contract'ını ve Day 1-13 boyunca
 geliştirilen davranışları Postman üzerinden doğrulamak için kullanılır.
 
 Geçmiş günler için aynı endpoint'leri tekrar eden ayrı collection dosyaları
@@ -15,6 +15,7 @@ ayrı collection olarak korunur.
 | `stock-service.postman_collection.json` | Tüm güncel Stock Service endpoint ve hata senaryoları |
 | `stock-service-local.postman_environment.json` | Local URL, ürün, bayi ve geo parametreleri |
 | `stock-service-day12.postman_collection.json` | Stok güncelleme sonrası cache invalidation senaryosu |
+| `stock-service-day13-gateway.postman_collection.json` | Gateway routing, correlation ID, stok güncelleme ve cache kontrolü |
 
 API alanları, status kodları ve hata gövdeleri için ana kaynak
 `../../docs/api-contract.md` dosyasıdır. Contract değişirse önce contract, sonra
@@ -25,7 +26,8 @@ kod ve bu collection'lar güncellenir.
 1. Oracle ve Redis çalışıyor olmalı.
 2. Store Service `http://localhost:8081` üzerinde çalışmalı.
 3. Stock Service `http://localhost:8080` üzerinde çalışmalı.
-4. `stock_app` şemasında `sql/schema.sql` ve `sql/data.sql` uygulanmış olmalı.
+4. Gateway `http://localhost:8083` üzerinde çalışmalı.
+5. `stock_app` şemasında `sql/schema.sql` ve `sql/data.sql` uygulanmış olmalı.
 
 Servis kontrolleri:
 
@@ -33,6 +35,7 @@ Servis kontrolleri:
 docker exec turkcell-redis redis-cli ping
 Invoke-RestMethod http://localhost:8081/actuator/health
 Invoke-RestMethod http://localhost:8080/actuator/health
+Invoke-RestMethod http://localhost:8083/actuator/health
 ```
 
 ## Postman'e Import
@@ -46,6 +49,9 @@ Sağ üstteki environment menüsünden **Stock Service - Local** seç.
 
 Day 12 cache invalidation testi için ayrıca
 `stock-service-day12.postman_collection.json` dosyasını import et.
+
+Day 13 Gateway testi için ayrıca
+`stock-service-day13-gateway.postman_collection.json` dosyasını import et.
 
 ## Günlere Göre Kapsam
 
@@ -62,6 +68,7 @@ Day 12 cache invalidation testi için ayrıca
 | Day 10 | Servisler birlikte çalışırken uçtan uca GET ve hata senaryoları |
 | Day 11 | Aynı geo GET çağrısında Redis cache anahtarının oluşması |
 | Day 12 | PUT ile stok güncelleme ve eski cache sonucunun silinmesi |
+| Day 13 | Gateway route, CORS/correlation altyapısı ve rate-limited PUT akışı |
 
 Day 3, 4, 6 ve 9 gibi iç mimari günleri yalnızca HTTP response'tan tamamen
 kanıtlanamaz. Bu günlerde Postman sonucu; kod, SQL ve otomatik testlerle birlikte
@@ -115,3 +122,20 @@ Sonuç gelmemelidir. Dördüncü GET sonrasında anahtar yeniden oluşur.
 Day 12 collection'ı miktarı `4` değerinde bırakır. Test sonunda seed değerine
 dönmek için ana collection içindeki `PUT Restore Seed Quantity - 204` isteğini
 çalıştır.
+
+## Day 13 Gateway Kontrolü
+
+Day 13 collection'ını Gateway, Stock Service, Store Service, Oracle ve Redis
+çalışırken sırasıyla çalıştır:
+
+1. Gateway health sonucunun `UP` olduğunu doğrular.
+2. Ürün kataloğunu `/api/pasaj/products` üzerinden getirir ve gönderilen
+   correlation ID'nin response'a taşındığını doğrular.
+3. Geo stok sorgusunun Gateway üzerinden çalıştığını, sonuçların mesafeye göre
+   sıralandığını ve raw quantity dönmediğini kontrol eder.
+4. Stok miktarını Gateway üzerinden `4` yapar ve `204 No Content` bekler.
+5. Cache invalidation sonrasında ilgili bayinin `LOW` döndüğünü doğrular.
+6. Test verisini bozmamak için miktarı tekrar seed değeri `10` yapar.
+
+Gateway base URL environment içinde `gatewayBaseUrl=http://localhost:8083`
+olarak tanımlıdır.

@@ -16,6 +16,23 @@ Field names (`id`, `name`, `workingHours`, …) match the frontend mock data and
 | 404 usage | Only when a specific ID does not exist |
 | Error format | Shared `ApiError` body on every service |
 
+External clients use API Gateway on port `8083`. The Gateway owns the public
+prefixes and forwards requests to the services without changing their internal
+ports:
+
+| Public prefix | Target service |
+|---|---|
+| `/api/pasaj/**` | `stock-service:8080` |
+
+For example, `GET /api/pasaj/products` is forwarded internally as
+`GET /products`. Service-to-service calls continue to use the internal service
+URLs directly; they do not pass through the Gateway.
+
+The Gateway rate limits the public stock update route by client IP. Its default
+policy allows 5 requests per second with a burst capacity of 10. When the limit
+is exceeded, the Gateway returns `429 Too Many Requests`. Read routes are not
+subject to this write limit.
+
 ```ts
 interface ApiError {
   status: number;

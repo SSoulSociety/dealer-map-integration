@@ -131,3 +131,18 @@ For local frontend integration, CORS allows the Vite development origin
 `http://localhost:5173` by default. Override `FRONTEND_ALLOWED_ORIGIN` when the
 frontend is served from a different origin. CORS can be centralized at the API
 Gateway when the gateway is introduced.
+
+## API Gateway
+
+Day 13 adds `gateway-service` as the public entry point on port `8083`. The
+Stock Service remains on port `8080`; the Gateway removes the `/api/pasaj`
+prefix and forwards the request internally:
+
+```text
+GET http://localhost:8083/api/pasaj/products
+GET http://localhost:8083/api/pasaj/products/1/stores?lat=41.02&lng=29.01&radius=10
+PUT http://localhost:8083/api/pasaj/products/1/stores/1/stock
+```
+
+Gateway verification is available in
+`postman/stock-service-day13-gateway.postman_collection.json`.
