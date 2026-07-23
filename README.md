@@ -13,6 +13,7 @@
 ```txt
 dealer-map-integration
 ├── docker-compose.yml   (Oracle Free)
+├── gateway-service      (port 8083 — API Gateway)
 ├── stock-service        (port 8080 — Pasaj / Backend A)
 ├── store-service        (port 8081 — Bayi master data / Backend B)
 ├── capability-service   (port 8082 — İşlem yetkinliği / Backend B)
