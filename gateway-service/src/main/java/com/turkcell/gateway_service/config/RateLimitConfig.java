@@ -1,5 +1,6 @@
 package com.turkcell.gateway_service.config;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
@@ -15,7 +16,7 @@ public class RateLimitConfig {
     KeyResolver clientIpKeyResolver() {
         return exchange -> Mono.justOrEmpty(exchange.getRequest().getRemoteAddress())
                 .map(InetSocketAddress::getAddress)
-                .map(address -> address.getHostAddress())
+                .map(InetAddress::getHostAddress)
                 .defaultIfEmpty("unknown-client");
     }
 }

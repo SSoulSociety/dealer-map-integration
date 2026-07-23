@@ -29,7 +29,7 @@ correlation ID ve işlem süresi loglanıyor.
 
 Gateway'in Stock Service bağlantısı için connect ve response timeout değerlerini
 environment variable ile değiştirilebilir hale getirdim. Actuator health ve
-Gateway route endpoint'lerini açtım.
+info endpoint'lerini açtım. Gateway route yönetim endpoint'ini dışarı açmadım.
 
 Stok güncelleme endpoint'ine Redis tabanlı rate limiting ekledim. Limit yalnızca
 `PUT /api/pasaj/products/{productId}/stores/{storeId}/stock` route'una
@@ -41,7 +41,8 @@ limitten etkilenmiyor.
 Route prefix dönüşümü, query parametrelerinin korunması, CORS preflight,
 correlation ID üretimi ve mevcut correlation ID'nin aktarılması için otomatik
 testler yazdım. Rate limiter filtresinin yalnızca stok yazma route'unda olduğunu
-da doğruladım. Toplam 5 Gateway testi başarıyla tamamlandı.
+ve Gateway Actuator yönetim endpoint'inin dışarı açılmadığını da doğruladım.
+Toplam 6 Gateway testi başarıyla tamamlandı.
 
 Canlı entegrasyon kontrolünde Gateway health endpoint'inden `UP` cevabı aldım.
 Ürün kataloğunu ve yakın bayi stoklarını `8083` portundaki `/api/pasaj`
