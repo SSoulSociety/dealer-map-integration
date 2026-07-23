@@ -21,7 +21,7 @@ final class MockAPIClient: DealerAPIClient {
 
     func fetchStores(forProduct productId: Int, lat: Double, lng: Double, radius: Double) async throws -> [StoreWithDistance] {
         try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
-        return MockData.storesWithDistance(forProductId: productId)
+        return MockData.storesWithDistance(forProductId: productId, lat: lat, lng: lng, radius: radius)
     }
 
     func fetchCapabilityTypes() async throws -> [CapabilityTypeOption] {
@@ -31,7 +31,7 @@ final class MockAPIClient: DealerAPIClient {
 
     func fetchStores(forCapability type: CapabilityType, lat: Double, lng: Double, radius: Double) async throws -> [StoreWithDistance] {
         try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
-        return MockData.storesWithDistance
+        return MockData.storesWithDistance(lat: lat, lng: lng, radius: radius)
     }
 
     func fetchStores(ids: [Int]) async throws -> [Store] {
