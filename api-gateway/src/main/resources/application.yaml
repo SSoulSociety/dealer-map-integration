@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Pasaj (Backend A) — /api/pasaj/products → stock-service /products
+        - id: pasaj-stock
+          uri: ${STOCK_SERVICE_URI:http://localhost:8080}
+          predicates:
+            - Path=/api/pasaj/**
+          filters:
+            - StripPrefix=2
+        # Bayi master data (Backend B) — /api/stores/** → store-service /stores/**
+        - id: stores
+          uri: ${STORE_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/api/stores/**
+          filters:
+            - StripPrefix=1
+        # com.tr (Backend B) — /api/comtr/capabilities → capability-service /capabilities
+        - id: comtr-capability
+          uri: ${CAPABILITY_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/comtr/**
+          filters:
+            - StripPrefix=2
+
+server:
+  port: ${GATEWAY_PORT:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+app:
+  cors:
+    # Single place for frontend origins (moved from microservices — Day 13)
+    allowed-origins: http://localhost:5173,http://localhost:3000

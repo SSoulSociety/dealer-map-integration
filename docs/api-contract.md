@@ -44,6 +44,8 @@ interface Store {
   type: StoreType;
   phone: string;
   workingHours: string;
+  /** Day 12 — Google Maps directions deep link (store-service / capability-service) */
+  directionsUrl: string;
 }
 ```
 
@@ -140,7 +142,8 @@ Single store detail. (**store-service**)
   "longitude": 29.0253,
   "type": "TIM",
   "phone": "+90 216 555 0101",
-  "workingHours": "09:00 - 21:00"
+  "workingHours": "09:00 - 21:00",
+  "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=40.990100,29.025300"
 }
 ```
 
@@ -167,7 +170,8 @@ Bulk store lookup — primary endpoint used by `stock-service` / `capability-ser
     "longitude": 29.0253,
     "type": "TIM",
     "phone": "+90 216 555 0101",
-    "workingHours": "09:00 - 21:00"
+    "workingHours": "09:00 - 21:00",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=40.990100,29.025300"
   }
 ]
 ```
@@ -206,6 +210,8 @@ Pasaj main endpoint — stores with stock for the product, within radius, sorted
 ]
 ```
 
+> Note: `directionsUrl` is produced by Backend B (`store-service` / `capability-service`). Pasaj stock results may omit it until Backend A adds the same field.
+
 **Response `404`** (unknown product id):
 ```json
 { "status": 404, "message": "Product not found: id=99", "timestamp": "2026-07-09T10:00:00Z" }
@@ -237,7 +243,8 @@ com.tr main endpoint — stores that support the capability, within radius. (**c
     "type": "TIM",
     "phone": "+90 212 555 0103",
     "workingHours": "09:00 - 22:00",
-    "distance": 3.7
+    "distance": 3.7,
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=41.060200,28.987700"
   }
 ]
 ```

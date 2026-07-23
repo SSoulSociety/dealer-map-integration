@@ -52,6 +52,4 @@ store-service:
   # used by docs / clients
   base-url: http://localhost:8081
 
-app:
-  cors:
-    allowed-origins: http://localhost:5173,http://localhost:3000
+# Day 13: CORS moved to api-gateway (port 8085). Do not re-enable here.

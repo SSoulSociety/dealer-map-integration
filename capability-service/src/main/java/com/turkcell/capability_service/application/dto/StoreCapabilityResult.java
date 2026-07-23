@@ -1,7 +1,7 @@
 package com.turkcell.capability_service.application.dto;
 
 /**
- * Matches API contract {@code StoreCapabilityResult} (StoreWithDistance).
+ * Matches API contract {@code StoreCapabilityResult} (StoreWithDistance + Day-12 directionsUrl).
  */
 public record StoreCapabilityResult(
 		Long id,
@@ -14,6 +14,7 @@ public record StoreCapabilityResult(
 		String type,
 		String phone,
 		String workingHours,
-		double distance
+		double distance,
+		String directionsUrl
 ) {
 }
