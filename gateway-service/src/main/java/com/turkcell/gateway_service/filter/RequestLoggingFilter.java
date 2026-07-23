@@ -3,6 +3,7 @@ package com.turkcell.gateway_service.filter;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
+@NullMarked
 public class RequestLoggingFilter implements GlobalFilter, Ordered {
 
     public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
