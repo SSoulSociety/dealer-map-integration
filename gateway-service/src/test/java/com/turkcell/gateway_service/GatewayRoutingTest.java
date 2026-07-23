@@ -10,9 +10,12 @@ import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.cloud.gateway.filter.FilterDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -25,11 +28,20 @@ class GatewayRoutingTest {
 
     private static final HttpServer stockService = startStockService();
 
-    @Autowired
+    @LocalServerPort
+    private int gatewayPort;
+
     private WebTestClient webTestClient;
 
     @Autowired
     private RouteDefinitionLocator routeDefinitionLocator;
+
+    @BeforeEach
+    void configureWebTestClient() {
+        webTestClient = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + gatewayPort)
+                .build();
+    }
 
     @AfterAll
     static void stopStockService() {
@@ -81,6 +93,14 @@ class GatewayRoutingTest {
     }
 
     @Test
+    void doesNotExposeGatewayActuatorEndpoint() {
+        webTestClient.get()
+                .uri("/actuator/gateway")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
     void appliesRedisRateLimiterOnlyToStockWriteRoute() {
         var routes = routeDefinitionLocator.getRouteDefinitions().collectList().block();
 
@@ -91,7 +111,7 @@ class GatewayRoutingTest {
                 .orElseThrow();
 
         assertThat(writeRoute.getFilters())
-                .extracting(filter -> filter.getName())
+                .extracting(FilterDefinition::getName)
                 .containsExactly("StripPrefix", "RequestRateLimiter");
     }
 

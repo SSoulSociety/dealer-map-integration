@@ -4,6 +4,9 @@
 microservices. It runs on port `8083`; the existing service ports stay
 unchanged.
 
+The service uses Spring Boot `4.1.0`, Spring Cloud `2025.1.2`, and Spring Cloud
+Gateway Server WebFlux `5.0.2`. Java 17 or newer is required.
+
 ## Day 13 scope
 
 - Routes `/api/pasaj/**` requests to `stock-service` on port `8080`
@@ -13,7 +16,7 @@ unchanged.
 - Logs method, path, response status, correlation ID, and request duration
 - Rate limits stock update requests by client IP using Redis
 - Applies connection and response timeouts
-- Exposes Actuator health and read-only Gateway route information
+- Exposes only Actuator health and info endpoints
 
 ## Port map
 

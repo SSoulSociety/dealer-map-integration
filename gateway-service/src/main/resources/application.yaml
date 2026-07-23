@@ -4,52 +4,54 @@ spring:
 
   cloud:
     gateway:
-      routes:
-        - id: stock-service-write
-          order: -1
-          uri: ${STOCK_SERVICE_BASE_URL:http://localhost:8080}
-          predicates:
-            - Path=/api/pasaj/products/*/stores/*/stock
-            - Method=PUT
-          filters:
-            - StripPrefix=2
-            - name: RequestRateLimiter
-              args:
-                key-resolver: "#{@clientIpKeyResolver}"
-                redis-rate-limiter.replenishRate: ${STOCK_WRITE_RATE_PER_SECOND:5}
-                redis-rate-limiter.burstCapacity: ${STOCK_WRITE_BURST_CAPACITY:10}
-                redis-rate-limiter.requestedTokens: 1
+      server:
+        webflux:
+          routes:
+            - id: stock-service-write
+              order: -1
+              uri: ${STOCK_SERVICE_BASE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/pasaj/products/*/stores/*/stock
+                - Method=PUT
+              filters:
+                - StripPrefix=2
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${STOCK_WRITE_RATE_PER_SECOND:5}
+                    redis-rate-limiter.burstCapacity: ${STOCK_WRITE_BURST_CAPACITY:10}
+                    redis-rate-limiter.requestedTokens: 1
 
-        - id: stock-service
-          order: 0
-          uri: ${STOCK_SERVICE_BASE_URL:http://localhost:8080}
-          predicates:
-            - Path=/api/pasaj/**
-          filters:
-            - StripPrefix=2
+            - id: stock-service
+              order: 0
+              uri: ${STOCK_SERVICE_BASE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/pasaj/**
+              filters:
+                - StripPrefix=2
 
-      globalcors:
-        add-to-simple-url-handler-mapping: true
-        cors-configurations:
-          '[/**]':
-            allowed-origins:
-              - ${FRONTEND_ALLOWED_ORIGIN:http://localhost:5173}
-            allowed-methods:
-              - GET
-              - PUT
-              - OPTIONS
-            allowed-headers:
-              - Content-Type
-              - Accept
-              - X-Correlation-Id
-            exposed-headers:
-              - X-Correlation-Id
-            allow-credentials: true
-            max-age: 3600
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - ${FRONTEND_ALLOWED_ORIGIN:http://localhost:5173}
+                allowed-methods:
+                  - GET
+                  - PUT
+                  - OPTIONS
+                allowed-headers:
+                  - Content-Type
+                  - Accept
+                  - X-Correlation-Id
+                exposed-headers:
+                  - X-Correlation-Id
+                allow-credentials: true
+                max-age: 3600
 
-      httpclient:
-        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:2000}
-        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
+          httpclient:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:2000}
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
 
   data:
     redis:
@@ -67,10 +69,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
-  endpoint:
-    gateway:
-      enabled: true
+        include: health,info
 
 logging:
   level:
