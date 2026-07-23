@@ -57,8 +57,13 @@ final class PasajViewModel {
         errorMessage = nil
         hasSearched = true
         selectedProduct = nil
+        let coordinate = userLocation ?? LocationManager.istanbulFallback
         do {
-            nearbyStores = try await AppEnvironment.apiClient.fetchAllStores()
+            nearbyStores = try await AppEnvironment.apiClient.fetchAllStores(
+                lat: coordinate.latitude,
+                lng: coordinate.longitude,
+                radius: 15
+            )
         } catch {
             errorMessage = error.localizedDescription
         }

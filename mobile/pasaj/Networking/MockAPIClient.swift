@@ -14,9 +14,9 @@ final class MockAPIClient: DealerAPIClient {
         return MockData.products
     }
 
-    func fetchAllStores() async throws -> [StoreWithDistance] {
+    func fetchAllStores(lat: Double, lng: Double, radius: Double) async throws -> [StoreWithDistance] {
         try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
-        return MockData.allStoresOverview
+        return MockData.allStoresOverview(lat: lat, lng: lng, radius: radius)
     }
 
     func fetchStores(forProduct productId: Int, lat: Double, lng: Double, radius: Double) async throws -> [StoreWithDistance] {

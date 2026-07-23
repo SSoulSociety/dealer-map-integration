@@ -6,6 +6,7 @@
 //  UI geliştirmeye devam etmek için.
 //
 
+import CoreLocation
 import Foundation
 
 extension StoreWithDistance {
@@ -69,10 +70,19 @@ enum MockData {
         StoreWithDistance(store: stores[5], distance: 6.3, stockLevel: nil),
     ].sorted { $0.distance < $1.distance }
 
-    // Pasaj'ın ilk açılış görünümü: ürün/işlem bağımsız, sadece bayi konumlarını gösterir.
-    static let allStoresOverview: [StoreWithDistance] = stores.enumerated().map { index, store in
-        StoreWithDistance(store: store, distance: Double(index) * 0.7 + 0.5, stockLevel: nil)
-    }.sorted { $0.distance < $1.distance }
+    // Pasaj'ın ilk açılış görünümü: ürün/işlem bağımsız, sadece yakın çevredeki bayi
+    // konumlarını gösterir. Türkiye çapında dönersek harita ilk açılışta tüm ülkeyi
+    // kapsayacak şekilde zoom-out eder (bkz. StoreMapView.fitCameraToStores) — bu yüzden
+    // gerçek mesafeye göre hesaplayıp radius dışındakileri eliyoruz.
+    static func allStoresOverview(lat: Double, lng: Double, radius: Double) -> [StoreWithDistance] {
+        let origin = CLLocation(latitude: lat, longitude: lng)
+        return stores.compactMap { store in
+            let distanceKm = origin.distance(from: CLLocation(latitude: store.latitude, longitude: store.longitude)) / 1000
+            guard distanceKm <= radius else { return nil }
+            return StoreWithDistance(store: store, distance: (distanceKm * 10).rounded() / 10, stockLevel: nil)
+        }
+        .sorted { $0.distance < $1.distance }
+    }
 
     // Pasaj sekmesi: her ürün için farklı bir bayi/stok görünümü üretir (deterministik,
     // gerçek Haversine hesabı değil — sadece mock demo amaçlı).

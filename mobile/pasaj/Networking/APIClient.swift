@@ -28,7 +28,7 @@ final class LiveAPIClient: DealerAPIClient {
         try await get([Product].self, from: "\(APIConfig.stockServiceBase)/products")
     }
 
-    func fetchAllStores() async throws -> [StoreWithDistance] {
+    func fetchAllStores(lat: Double, lng: Double, radius: Double) async throws -> [StoreWithDistance] {
         throw ApiError(
             status: 501,
             message: "Backend'de tüm bayileri listeleyen bir endpoint yok (api-contract.md'de tanımlı değil)",
