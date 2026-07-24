@@ -1,5 +1,5 @@
 import React from 'react';
-import { Drawer, Tag, Skeleton } from 'antd';
+import { Drawer, Tag, Skeleton, Button } from 'antd';
 import type { Store } from '../types/api';
 
 interface StoreDetailsDrawerProps {
@@ -100,6 +100,32 @@ export const StoreDetailsDrawer: React.FC<StoreDetailsDrawerProps> = ({
             <div className="drawer-detail-section">
               <div className="drawer-detail-label">Uzaklık</div>
               <div className="drawer-detail-value">📍 {store.distance} km uzakta</div>
+            </div>
+
+            <div className="drawer-detail-section" style={{ marginTop: '1.5rem' }}>
+              <a 
+                href={`https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                <Button 
+                  type="primary" 
+                  style={{ 
+                    width: '100%', 
+                    backgroundColor: 'var(--turkcell-blue)', 
+                    borderColor: 'var(--turkcell-blue)',
+                    borderRadius: '6px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  🗺️ Yol Tarifi Al (Google Maps)
+                </Button>
+              </a>
             </div>
 
             {extra}

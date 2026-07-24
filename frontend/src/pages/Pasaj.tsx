@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Select, Tag, Badge, Empty, Spin } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 import { StoreCard } from '../components/StoreCard';
 import { StoreMap } from '../components/StoreMap';
 import { StoreDetailsDrawer } from '../components/StoreDetailsDrawer';
@@ -21,9 +22,9 @@ const getProductBrand = (name: string): string => {
 const { Option } = Select;
 
 export const Pasaj: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<number | undefined>(1); // default to iPhone 15
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
+  const [hoveredStoreId, setHoveredStoreId] = useState<number | undefined>(undefined);
   const [mapCenter, setMapCenter] = useState({ lat: 41.0082, lng: 28.9784 });
   const [zoomLevel, setZoomLevel] = useState(12);
 
@@ -35,17 +36,13 @@ export const Pasaj: React.FC = () => {
   const [locationError, setLocationError] = useState(false);
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
 
-  // Results list from API
-  const [storeStocksList, setStoreStocksList] = useState<(Store & { stockLevel: StockLevel; distance: number; quantity?: number })[]>([]);
-  const [isStoreLoading, setIsStoreLoading] = useState(false);
   const [isDrawerLoading, setIsDrawerLoading] = useState(false);
 
-  // Load products list from API on mount
-  useEffect(() => {
-    apiService.getProducts().then(data => {
-      setProducts(data);
-    });
-  }, []);
+  // Load products list from API using TanStack Query
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['products'],
+    queryFn: apiService.getProducts,
+  });
 
   // Try to retrieve user's location via Geolocation API
   useEffect(() => {
@@ -109,26 +106,16 @@ export const Pasaj: React.FC = () => {
     }
   }, [selectedCategory, selectedBrand, filteredProducts, selectedProductId]);
 
-  // Load store stocks from API
-  useEffect(() => {
-    if (!selectedProductId) {
-      setStoreStocksList([]);
-      return;
-    }
-    
-    setIsStoreLoading(true);
-    apiService.getProductStores(selectedProductId, userCoords.lat, userCoords.lng, 10)
-      .then(data => {
-        const mapped = data.map(item => ({
-          ...item,
-          quantity: item.quantity ?? 0
-        }));
-        setStoreStocksList(mapped);
-      })
-      .finally(() => {
-        setIsStoreLoading(false);
-      });
-  }, [selectedProductId, userCoords]);
+  // Load store stocks from API using TanStack Query
+  const { data: storeStocksList = [], isLoading: isStoreLoading } = useQuery<(Store & { stockLevel: StockLevel; distance: number; quantity?: number })[]>({
+    queryKey: ['productStores', selectedProductId, userCoords.lat, userCoords.lng],
+    queryFn: () => selectedProductId 
+      ? apiService.getProductStores(selectedProductId, userCoords.lat, userCoords.lng, 10).then(data => 
+          data.map(item => ({ ...item, quantity: item.quantity ?? 0 }))
+        )
+      : Promise.resolve([]),
+    enabled: !!selectedProductId,
+  });
 
   const selectedStore = storeStocksList.find(s => s.id === selectedStoreId);
 
@@ -177,7 +164,7 @@ export const Pasaj: React.FC = () => {
   };
 
   const pasajExtraDetail = selectedStore && (
-    <div className="drawer-detail-section" style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem' }}>
+    <div className="drawer-detail-section" style={{ marginTop: '2rem', borderTop: '1px solid rgba(0, 0, 0, 0.08)', paddingTop: '1.5rem' }}>
       <div className="drawer-detail-label">Mevcut Stok Durumu</div>
       <div 
         style={{ 
@@ -313,24 +300,29 @@ export const Pasaj: React.FC = () => {
               </div>
             ) : storeStocksList.length > 0 ? (
               storeStocksList.map(item => (
-                <StoreCard
+                <div
                   key={item.id}
-                  store={item}
-                  isSelected={item.id === selectedStoreId}
-                  onClick={() => handleStoreSelect(item)}
-                  extra={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Tag color={getStockTagColor(item.stockLevel)}>
-                        {getStockLabel(item.stockLevel)}
-                      </Tag>
-                      {item.type === 'TIM' ? (
-                        <Badge status="processing" text="TIM" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }} />
-                      ) : (
-                        <Badge status="default" text="Franchise" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }} />
-                      )}
-                    </div>
-                  }
-                />
+                  onMouseEnter={() => setHoveredStoreId(item.id)}
+                  onMouseLeave={() => setHoveredStoreId(undefined)}
+                >
+                  <StoreCard
+                    store={item}
+                    isSelected={item.id === selectedStoreId}
+                    onClick={() => handleStoreSelect(item)}
+                    extra={
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Tag color={getStockTagColor(item.stockLevel)}>
+                          {getStockLabel(item.stockLevel)}
+                        </Tag>
+                        {item.type === 'TIM' ? (
+                          <Badge status="processing" text="TIM" style={{ color: 'rgba(0,0,0,0.45)', fontSize: '0.8rem' }} />
+                        ) : (
+                          <Badge status="default" text="Franchise" style={{ color: 'rgba(0,0,0,0.25)', fontSize: '0.8rem' }} />
+                        )}
+                      </div>
+                    }
+                  />
+                </div>
               ))
             ) : (
               <Empty description="Stokta bu ürünü bulunduran mağaza bulunamadı" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -345,6 +337,7 @@ export const Pasaj: React.FC = () => {
             zoom={zoomLevel}
             stores={storeStocksList}
             selectedStoreId={selectedStoreId}
+            hoveredStoreId={hoveredStoreId}
             onStoreSelect={handleStoreSelect}
           />
         </main>
