@@ -4,6 +4,7 @@ import { Select, Tag, Empty, Button, Spin } from 'antd';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useQuery } from '@tanstack/react-query';
 import { StoreCard } from '../components/StoreCard';
 import { StoreMap } from '../components/StoreMap';
 import { StoreDetailsDrawer } from '../components/StoreDetailsDrawer';
@@ -27,19 +28,15 @@ const schema = yup.object().shape({
 
 export const Transactions: React.FC = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
+  const [hoveredStoreId, setHoveredStoreId] = useState<number | undefined>(undefined);
   const [mapCenter, setMapCenter] = useState({ lat: 41.0082, lng: 28.9784 });
   const [zoomLevel, setZoomLevel] = useState(12);
-  const [isSearching, setIsSearching] = useState(false);
   const [isDrawerLoading, setIsDrawerLoading] = useState(false);
 
   // Geolocation & Fallback States
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number }>({ lat: 41.0082, lng: 28.9784 });
   const [locationError, setLocationError] = useState(false);
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
-
-  // Dropdown options & Results States from API
-  const [capabilitiesList, setCapabilitiesList] = useState<CapabilityTypeOption[]>([]);
-  const [eligibleStores, setEligibleStores] = useState<StoreCapabilityResult[]>([]);
 
   const [appliedFilters, setAppliedFilters] = useState<FormValues>({
     capabilityType: 'NEW_LINE',
@@ -95,38 +92,29 @@ export const Transactions: React.FC = () => {
     }
   };
 
-  // Load capability options from API on mount
-  useEffect(() => {
-    apiService.getCapabilityTypes().then(data => {
-      setCapabilitiesList(data);
-    });
-  }, []);
+  // Load capability options from API using TanStack Query
+  const { data: capabilitiesList = [] } = useQuery<CapabilityTypeOption[]>({
+    queryKey: ['capabilityTypes'],
+    queryFn: apiService.getCapabilityTypes,
+  });
 
-  // Fetch eligible stores from API based on applied filters and coordinates
-  useEffect(() => {
-    if (!appliedFilters.capabilityType) {
-      setEligibleStores([]);
-      return;
-    }
-
-    setIsSearching(true);
-    apiService.getCapabilityStores(
-      appliedFilters.capabilityType as CapabilityType,
-      userCoords.lat,
-      userCoords.lng,
-      10, // 10km radius
-      {
-        workingHours: appliedFilters.workingHours,
-        storeType: appliedFilters.storeType
-      }
-    )
-    .then(data => {
-      setEligibleStores(data);
-    })
-    .finally(() => {
-      setIsSearching(false);
-    });
-  }, [appliedFilters, userCoords]);
+  // Fetch eligible stores from API based on applied filters and coordinates using TanStack Query
+  const { data: eligibleStores = [], isLoading: isSearching } = useQuery<StoreCapabilityResult[]>({
+    queryKey: ['capabilityStores', appliedFilters, userCoords.lat, userCoords.lng],
+    queryFn: () => appliedFilters.capabilityType 
+      ? apiService.getCapabilityStores(
+          appliedFilters.capabilityType as CapabilityType,
+          userCoords.lat,
+          userCoords.lng,
+          10, // 10km radius
+          {
+            workingHours: appliedFilters.workingHours,
+            storeType: appliedFilters.storeType
+          }
+        )
+      : Promise.resolve([]),
+    enabled: !!appliedFilters.capabilityType,
+  });
 
   const selectedStore = eligibleStores.find(s => s.id === selectedStoreId);
 
@@ -325,26 +313,31 @@ export const Transactions: React.FC = () => {
               </div>
             ) : eligibleStores.length > 0 ? (
               eligibleStores.map(item => (
-                <StoreCard
+                <div
                   key={item.id}
-                  store={item}
-                  isSelected={item.id === selectedStoreId}
-                  onClick={() => handleStoreSelect(item)}
-                  extra={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        {item.type === 'TIM' ? (
-                          <Tag color="blue">TIM</Tag>
-                        ) : (
-                          <Tag color="cyan">Franchise</Tag>
-                        )}
+                  onMouseEnter={() => setHoveredStoreId(item.id)}
+                  onMouseLeave={() => setHoveredStoreId(undefined)}
+                >
+                  <StoreCard
+                    store={item}
+                    isSelected={item.id === selectedStoreId}
+                    onClick={() => handleStoreSelect(item)}
+                    extra={
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                          {item.type === 'TIM' ? (
+                            <Tag color="blue">TIM</Tag>
+                          ) : (
+                            <Tag color="cyan">Franchise</Tag>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(0,0,0,0.45)' }}>
+                          📍 {item.distance} km uzakta
+                        </span>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: 'rgba(0, 0, 0, 0.45)' }}>
-                        📍 {item.distance} km uzakta
-                      </span>
-                    </div>
-                  }
-                />
+                    }
+                  />
+                </div>
               ))
             ) : (
               <Empty description="Seçilen kriterlere uygun bayi bulunamadı" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -359,6 +352,7 @@ export const Transactions: React.FC = () => {
             zoom={zoomLevel}
             stores={eligibleStores}
             selectedStoreId={selectedStoreId}
+            hoveredStoreId={hoveredStoreId}
             onStoreSelect={handleStoreSelect}
           />
         </main>

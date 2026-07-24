@@ -9,9 +9,20 @@ import type {
   StockLevel
 } from '../types/api';
 
-const VITE_STOCK_SERVICE_URL = import.meta.env.VITE_STOCK_SERVICE_URL || 'http://localhost:8080';
-const VITE_STORE_SERVICE_URL = import.meta.env.VITE_STORE_SERVICE_URL || 'http://localhost:8081';
-const VITE_CAPABILITY_SERVICE_URL = import.meta.env.VITE_CAPABILITY_SERVICE_URL || 'http://localhost:8082';
+const VITE_API_GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || '';
+
+// If Gateway URL is provided, route through Gateway prefixes, else fallback to direct microservice ports
+const VITE_STOCK_SERVICE_URL = VITE_API_GATEWAY_URL 
+  ? `${VITE_API_GATEWAY_URL}/api/pasaj` 
+  : (import.meta.env.VITE_STOCK_SERVICE_URL || 'http://localhost:8080');
+
+const VITE_STORE_SERVICE_URL = VITE_API_GATEWAY_URL 
+  ? `${VITE_API_GATEWAY_URL}/api/stores` 
+  : (import.meta.env.VITE_STORE_SERVICE_URL || 'http://localhost:8081');
+
+const VITE_CAPABILITY_SERVICE_URL = VITE_API_GATEWAY_URL 
+  ? `${VITE_API_GATEWAY_URL}/api/comtr` 
+  : (import.meta.env.VITE_CAPABILITY_SERVICE_URL || 'http://localhost:8082');
 
 export const stockApi = axios.create({
   baseURL: VITE_STOCK_SERVICE_URL,
