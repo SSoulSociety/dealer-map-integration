@@ -16,6 +16,7 @@ import com.turkcell.capability_service.application.dto.StoreCapabilityResult;
 import com.turkcell.capability_service.domain.exception.CapabilityTypeNotFoundException;
 import com.turkcell.capability_service.domain.model.CapabilityType;
 import com.turkcell.capability_service.domain.service.DistanceCalculator;
+import com.turkcell.capability_service.domain.service.GoogleMapsDeepLink;
 import com.turkcell.capability_service.infrastructure.client.StoreDto;
 import com.turkcell.capability_service.infrastructure.client.StoreServiceClient;
 import com.turkcell.capability_service.infrastructure.persistence.StoreCapabilityRepository;
@@ -115,6 +116,7 @@ public class CapabilityApplicationService {
 				store.type(),
 				store.phone(),
 				store.workingHours(),
-				distance);
+				distance,
+				GoogleMapsDeepLink.forCoordinates(store.latitude(), store.longitude()));
 	}
 }

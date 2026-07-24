@@ -3,10 +3,11 @@ package com.turkcell.store_service.application.dto;
 import com.turkcell.store_service.domain.model.Store;
 import com.turkcell.store_service.domain.model.StoreStatus;
 import com.turkcell.store_service.domain.model.StoreType;
+import com.turkcell.store_service.domain.service.GoogleMapsDeepLink;
 
 /**
  * Matches API contract {@code Store} type, plus Day-7 filter fields
- * ({@code status}, {@code opensWeekend}) for capability-service.
+ * ({@code status}, {@code opensWeekend}) and Day-12 {@code directionsUrl}.
  */
 public record StoreResponse(
 		Long id,
@@ -20,7 +21,8 @@ public record StoreResponse(
 		String phone,
 		String workingHours,
 		StoreStatus status,
-		boolean opensWeekend
+		boolean opensWeekend,
+		String directionsUrl
 ) {
 	public static StoreResponse from(Store store) {
 		return new StoreResponse(
@@ -35,6 +37,7 @@ public record StoreResponse(
 				store.getPhone(),
 				store.getWorkingHours(),
 				store.getStatus(),
-				store.isOpensWeekend());
+				store.isOpensWeekend(),
+				GoogleMapsDeepLink.forCoordinates(store.getLatitude(), store.getLongitude()));
 	}
 }
